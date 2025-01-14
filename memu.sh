@@ -27,6 +27,7 @@ fun_1_ScriptsStore() {
 	    openledger_part=$(echo "$line" | sed -n 's/.*github.com\/GHH10268\/\(.*\)\.git.*/\1/p')
 	    echo "$i. $openledger_part"
 	    urls+=("$line")  # urls数组保存完整的line内容
+     	    echo "$line"
 	    ((i++))
 	done < "$json_file"
 
