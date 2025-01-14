@@ -10,7 +10,7 @@ fun_1_ScriptsStore() {
 
 
     # 提示用户输入GitHub的URL链接
-    read -p "请输入GitHub的JSON文件URL链接：" url
+    url="https://raw.githubusercontent.com/GHH10268/Farming_Tool_Box/refs/heads/master/scripts.json"
 
     # 下载JSON文件到本地
     local json_file="downloaded_json.json"
