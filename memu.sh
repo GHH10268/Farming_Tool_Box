@@ -10,80 +10,70 @@ fun_1_ScriptsStore() {
 
 
     # 提示用户输入GitHub的URL链接
-    url="https://raw.githubusercontent.com/GHH10268/Farming_Tool_Box/refs/heads/master/scripts.json"
+    input_url="https://raw.githubusercontent.com/GHH10268/Farming_Tool_Box/refs/heads/master/scripts.json"
 
-    # 下载JSON文件到本地
-    local json_file="downloaded_json.json"
-    echo "正在下载JSON文件..."
-    if curl -s -o "$json_file" -w "%{http_code}" "$url" | grep -q "200"; then
-        echo "JSON文件下载成功"
-
-        # 读取JSON文件的内容并逐行显示
-        echo "JSON文件内容如下："
-	i=1
+	
+	# 从JSON文件中读取内容
+	json_file="urls.json"  # 假设JSON文件名为urls.json
 	urls=()
 	while IFS= read -r line; do
-	    # 使用sed提取Openledger部分
-	    openledger_part=$(echo "$line" | sed -n 's/.*github.com\/GHH10268\/\(.*\)\.git.*/\1/p')
-	    echo "$i. $openledger_part"
-	    urls+=("$line")  # urls数组保存完整的line内容
-     	    echo "$line"
-	    ((i++))
+	    # 解析每行的URL
+	    url=$(echo "$line" | grep -oP '(?<=<url.*>).*?(?=</url>)')
+	    if [[ -n "$url" ]]; then
+	        urls+=("$url")
+	    fi
 	done < "$json_file"
+	
+	# 提示用户选择要下载的URL
+	read -p "请选择要下载的URL编号（输入0返回主菜单）: " choice
+	if [ "$choice" == "0" ]; then
+	    return
+	elif [ "$choice" -ge 1 ] && [ "$choice" -le "${#urls[@]}" ]; then
+	    selected_url=$(echo "${urls[$choice-1]}" | grep -oP '(?<=<url.*>).*?(?=</url>)')
+	    project_name=$(echo "$selected_url" | grep -oP '(?<=://).*(?=/)' | sed 's/[^a-zA-Z]//g')
+	
+	    # 检查Scripts文件夹是否存在
+	    scripts_dir="Scripts"
+	    if [ ! -d "$scripts_dir" ]; then
+	        mkdir -p "$scripts_dir"
+	    fi
+	
+	    # 检查项目文件夹是否存在
+	    project_dir="$scripts_dir/$project_name"
+	    if [ -d "$project_dir" ]; then
+	        read -p "本地已有脚本文件，是否覆盖？(y/n): " confirm
+	        if [ "$confirm" == "y" ]; then
+	            rm -rf "$project_dir"
+	        else
+	            echo "下载取消"
+	            return
+	        fi
+	    fi
+	
+	    # 创建项目文件夹
+	    mkdir -p "$project_dir"
+	
+	    # 下载项目
+	    echo "正在下载项目 $project_name 到 $project_dir..."
+	    if git clone "$selected_url" "$project_dir"; then
+	        echo "项目 $project_name 下载成功"
+	    else
+	        echo "项目 $project_name 下载失败"
+	        echo "可能的原因："
+	        echo "1. 链接可能不正确或文件不存在"
+	        echo "2. 网络连接问题"
+	        echo "请检查链接的合法性和网络连接，适当重试。"
+	    fi
+	else
+	    echo "无效的选项"
+	fi
+	
+	# 提示用户输入选项0返回主菜单
+	read -p "输入0返回主菜单: " choice
+	if [ "$choice" == "0" ]; then
+	    return
+	fi
 
-        # 提示用户选择要下载的URL
-        read -p "请选择要下载的URL编号（输入0返回主菜单）：" choice
-        if [ "$choice" == "0" ]; then
-            return
-        elif [ "$choice" -ge 1 ] && [ "$choice" -le "${#urls[@]}" ]; then
-            selected_url=$(echo "${urls[$choice-1]}" | grep -oP '(?<=url>).*(?=</url)')
-            project_name=$(echo "$selected_url" | grep -oP '(?<=://).*(?=/)' | sed 's/[^a-zA-Z]//g')
-
-            # 检查Scripts文件夹是否存在
-            scripts_dir="Scripts"
-            if [ ! -d "$scripts_dir" ]; then
-                mkdir -p "$scripts_dir"
-            fi
-
-            # 检查项目文件夹是否存在
-            project_dir="$scripts_dir/$project_name"
-            if [ -d "$project_dir" ]; then
-                read -p "本地已有脚本文件，是否覆盖？(y/n): " confirm
-                if [ "$confirm" == "y" ]; then
-                    rm -rf "$project_dir"
-                else
-                    echo "下载取消"
-                    return
-                fi
-            fi
-
-            # 创建项目文件夹
-            mkdir -p "$project_dir"
-
-            # 下载项目
-	    echo "$selected_url"
-            echo "正在下载项目 $project_name 到 $project_dir..."
-            if git clone "$selected_url" "$project_dir"; then
-                echo "项目 $project_name 下载成功"
-            else
-                echo "项目 $project_name 下载失败"
-            fi
-        else
-            echo "无效的选项"
-        fi
-    else
-        echo "下载失败，HTTP状态码非200"
-        echo "可能的原因："
-        echo "1. 链接可能不正确或文件不存在"
-        echo "2. 网络连接问题"
-        echo "请检查链接的合法性和网络连接，适当重试。"
-    fi
-
-    # 提示用户输入选项0返回主菜单
-    read -p "输入0返回主菜单：" choice
-    if [ "$choice" == "0" ]; then
-        return
-    fi
 }
 
 # 定义fun_2_RunningTmux函数
