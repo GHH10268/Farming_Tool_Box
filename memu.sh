@@ -20,13 +20,15 @@ fun_1_ScriptsStore() {
 
         # 读取JSON文件的内容并逐行显示
         echo "JSON文件内容如下："
-        i=1
-        urls=()
-        while IFS= read -r line; do
-            echo "$i. $line"
-            urls+=("$line")
-            ((i++))
-        done < "$json_file"
+	i=1
+	urls=()
+	while IFS= read -r line; do
+	    # 使用sed提取Openledger部分
+	    openledger_part=$(echo "$line" | sed -n 's/.*github.com\/GHH10268\/\(.*\)\.git.*/\1/p')
+	    echo "$i. $openledger_part"
+	    urls+=("$line")  # urls数组保存完整的line内容
+	    ((i++))
+	done < "$json_file"
 
         # 提示用户选择要下载的URL
         read -p "请选择要下载的URL编号（输入0返回主菜单）：" choice
