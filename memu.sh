@@ -61,6 +61,7 @@ fun_1_ScriptsStore() {
             mkdir -p "$project_dir"
 
             # 下载项目
+	    echo "$selected_url"
             echo "正在下载项目 $project_name 到 $project_dir..."
             if git clone "$selected_url" "$project_dir"; then
                 echo "项目 $project_name 下载成功"
